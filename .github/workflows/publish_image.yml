@@ -1,0 +1,62 @@
+name: Publish Image
+
+on:
+  workflow_call:
+    inputs:
+      IMAGE_NAME:
+        required: true
+        type: string
+      EDGE_BRANCH:
+        required: true
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+        type: string
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: Push to AWS ECR
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-west-2
+
+    - id: login-ecr
+      name: Login to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v1
+
+    # TODO - Commented out until SonarCloud integration fixed - https://monolith-ai.atlassian.net/browse/MN-5993
+    #- name: SonarCloud Scan
+    #   uses: SonarSource/sonarcloud-github-action@master
+    #   env:
+    #    GITHUB_TOKEN: ${{ secrets.CI_READ_GH_TOKEN }}  # Needed to get PR information, if any
+    #    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    - name: Build, tag and push image to AWS ECR
+      env:
+        DOCKER_BUILDKIT: 1
+      run: |
+        FULL_IMAGE_NAME=${{ steps.login-ecr.outputs.registry }}/$IMAGE_NAME
+        COMMIT_ID=$(git rev-parse HEAD)
+        EDGE_COMMIT_ID=$(git rev-parse origin/$EDGE_BRANCH)
+        LATEST_TAG=$(git tag | grep -e '^[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+$' | sort -V | tail -n1)
+
+        DOCKER_TAGS=$(git tag --points-at HEAD)
+        DOCKER_TAGS=$(if echo "$DOCKER_TAGS" | grep -q "^$LATEST_TAG$"; then echo -e "$DOCKER_TAGS\nlatest"; else echo "$DOCKER_TAGS"; fi)
+        DOCKER_TAGS=$(if [[ $COMMIT_ID == $EDGE_COMMIT_ID ]]; then echo -e "$DOCKER_TAGS\nedge"; else echo "$DOCKER_TAGS"; fi)
+        DOCKER_TAGS_ARG=$(echo "$DOCKER_TAGS" | sed -e "/^$/d" -e "s#^#-t $FULL_IMAGE_NAME:#" | tr "\n" " ")
+
+        docker build $DOCKER_TAGS_ARG --label org.opencontainers.image.revision=$COMMIT_ID .
+        docker push $FULL_IMAGE_NAME --all-tags
