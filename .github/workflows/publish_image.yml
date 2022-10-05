@@ -46,9 +46,9 @@ jobs:
       env:
         DOCKER_BUILDKIT: 1
       run: |
-        FULL_IMAGE_NAME=${{ steps.login-ecr.outputs.registry }}/$IMAGE_NAME
+        FULL_IMAGE_NAME=${{ steps.login-ecr.outputs.registry }}/${{ inputs.IMAGE_NAME }}
         COMMIT_ID=$(git rev-parse HEAD)
-        EDGE_COMMIT_ID=$(git rev-parse origin/$EDGE_BRANCH)
+        EDGE_COMMIT_ID=$(git rev-parse origin/${{ inputs.EDGE_BRANCH }})
         LATEST_TAG=$(git tag | grep -e '^[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+$' | sort -V | tail -n1)
 
         DOCKER_TAGS=$(git tag --points-at HEAD)
