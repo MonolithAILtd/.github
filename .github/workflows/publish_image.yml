@@ -17,11 +17,9 @@ on:
 
 jobs:
   deploy:
-    name: Push to AWS ECR
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout
+    - name: Checkout code
       uses: actions/checkout@v1
 
     - name: Configure AWS Credentials
