@@ -3,16 +3,16 @@ name: Publish Image
 on:
   workflow_call:
     inputs:
-      IMAGE_NAME:
+      image-name:
         required: true
         type: string
-      EDGE_BRANCH:
+      edge-branch:
         required: true
         type: string
     secrets:
-      AWS_ACCESS_KEY_ID:
+      aws-access-key-id:
         required: true
-      AWS_SECRET_ACCESS_KEY:
+      aws-secret-access-key:
         required: true
 
 jobs:
@@ -27,28 +27,21 @@ jobs:
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-access-key-id: ${{ secrets.aws-access-key-id }}
+        aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
         aws-region: eu-west-2
 
     - id: login-ecr
       name: Login to Amazon ECR
       uses: aws-actions/amazon-ecr-login@v1
 
-    # TODO - Commented out until SonarCloud integration fixed - https://monolith-ai.atlassian.net/browse/MN-5993
-    #- name: SonarCloud Scan
-    #   uses: SonarSource/sonarcloud-github-action@master
-    #   env:
-    #    GITHUB_TOKEN: ${{ secrets.CI_READ_GH_TOKEN }}  # Needed to get PR information, if any
-    #    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
     - name: Build, tag and push image to AWS ECR
       env:
         DOCKER_BUILDKIT: 1
       run: |
-        FULL_IMAGE_NAME=${{ steps.login-ecr.outputs.registry }}/${{ inputs.IMAGE_NAME }}
+        FULL_IMAGE_NAME=${{ steps.login-ecr.outputs.registry }}/${{ inputs.image-name }}
         COMMIT_ID=$(git rev-parse HEAD)
-        EDGE_COMMIT_ID=$(git rev-parse origin/${{ inputs.EDGE_BRANCH }})
+        EDGE_COMMIT_ID=$(git rev-parse origin/${{ inputs.edge-branch }})
         LATEST_TAG=$(git tag | grep -e '^[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+$' | sort -V | tail -n1)
 
         DOCKER_TAGS=$(git tag --points-at HEAD)
