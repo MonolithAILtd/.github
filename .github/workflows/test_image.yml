@@ -3,7 +3,7 @@ name: Test Image
 on:
   workflow_call:
     inputs:
-      target:
+      stage:
         required: false
         type: string
 jobs:
@@ -19,4 +19,4 @@ jobs:
       env:
         DOCKER_BUILDKIT: 1
       run: |
-        docker build . --target '${{ inputs.target }}'
+        docker build . --target '${{ inputs.stage }}'
