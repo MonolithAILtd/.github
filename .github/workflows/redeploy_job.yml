@@ -1,0 +1,32 @@
+name: Redeploy Job
+
+on:
+  workflow_call:
+    inputs:
+      job-name:
+        required: true
+        type: string
+      instance-name:
+        required: true
+        type: string
+    secrets:
+      nomad-token:
+        required: true
+    
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Redeploy job on instance
+      if: github.ref == 'refs/heads/develop'
+      env:
+        NOMAD_TOKEN: ${{ secrets.nomad-token }}
+        STAGING_ADDRESS: https://${{ inputs.instance-name }}.monolithai.app:4646 # could store this as secret
+      run: |
+        # Read job job and save response to json file
+        curl --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" ${{ env.STAGING_ADDRESS }}/v1/job/${{ inputs.job-name }} | jq '{Job: .}' > ReadJob.json
+        # Stop running job
+        curl -X DELETE --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" ${{ env.STAGING_ADDRESS }}/v1/job/${{ inputs.job-name }}
+        # Re-start the job with the job json file
+        curl -X POST --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" -d @ReadJob.json ${{ env.STAGING_ADDRESS }}/v1/jobs
+      
