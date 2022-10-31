@@ -17,6 +17,8 @@ on:
         required: true
       aws-secret-access-key:
         required: true
+      nomad-token:
+        required: true
 
 jobs:
   deploy:
