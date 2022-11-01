@@ -9,16 +9,11 @@ on:
       edge-branch:
         required: true
         type: string
-      instance-name:
-        required: true
-        type: string
     secrets:
       aws-access-key-id:
         required: true
       aws-secret-access-key:
         required: true
-      # nomad-token:
-      #   required: true
 
 jobs:
   deploy:
@@ -56,16 +51,3 @@ jobs:
 
         docker build $DOCKER_TAGS_ARG --label org.opencontainers.image.revision=$COMMIT_ID .
         docker push $FULL_IMAGE_NAME --all-tags
-
-    # - name: Redeploy job on instance
-    #   if: github.ref == 'refs/heads/develop'
-    #   env:
-    #     NOMAD_TOKEN: ${{ secrets.nomad-token }}
-    #     INSTANCE_ADDRESS: https://${{ inputs.instance-name }}.monolithai.app:4646 # could store this as secret
-    #   run: |
-    #     # Read job job and save response to json file
-    #     curl --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" ${{ env.INSTANCE_ADDRESS }}/v1/job/${{ inputs.image-name }} | jq '{Job: .}' > ReadJob.json
-    #     # Stop running job
-    #     curl -X DELETE --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" ${{ env.INSTANCE_ADDRESS }}/v1/job/${{ inputs.image-name }}
-    #     # Re-start the job with the job json file
-    #     curl -X POST --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" -d @ReadJob.json ${{ env.INSTANCE_ADDRESS }}/v1/jobs
