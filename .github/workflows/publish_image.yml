@@ -40,22 +40,22 @@ jobs:
       name: Login to Amazon ECR
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build, tag and push image to AWS ECR
-      env:
-        DOCKER_BUILDKIT: 1
-      run: |
-        FULL_IMAGE_NAME=${{ steps.login-ecr.outputs.registry }}/${{ inputs.image-name }}
-        COMMIT_ID=$(git rev-parse HEAD)
-        EDGE_COMMIT_ID=$(git rev-parse origin/${{ inputs.edge-branch }})
-        LATEST_TAG=$(git tag | grep -e '^[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+$' | sort -V | tail -n1)
+    # - name: Build, tag and push image to AWS ECR
+    #   env:
+    #     DOCKER_BUILDKIT: 1
+    #   run: |
+    #     FULL_IMAGE_NAME=${{ steps.login-ecr.outputs.registry }}/${{ inputs.image-name }}
+    #     COMMIT_ID=$(git rev-parse HEAD)
+    #     EDGE_COMMIT_ID=$(git rev-parse origin/${{ inputs.edge-branch }})
+    #     LATEST_TAG=$(git tag | grep -e '^[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+$' | sort -V | tail -n1)
 
-        DOCKER_TAGS=$(git tag --points-at HEAD)
-        DOCKER_TAGS=$(if echo "$DOCKER_TAGS" | grep -q "^$LATEST_TAG$"; then echo -e "$DOCKER_TAGS\nlatest"; else echo "$DOCKER_TAGS"; fi)
-        DOCKER_TAGS=$(if [[ $COMMIT_ID == $EDGE_COMMIT_ID ]]; then echo -e "$DOCKER_TAGS\nedge"; else echo "$DOCKER_TAGS"; fi)
-        DOCKER_TAGS_ARG=$(echo "$DOCKER_TAGS" | sed -e "/^$/d" -e "s#^#-t $FULL_IMAGE_NAME:#" | tr "\n" " ")
+    #     DOCKER_TAGS=$(git tag --points-at HEAD)
+    #     DOCKER_TAGS=$(if echo "$DOCKER_TAGS" | grep -q "^$LATEST_TAG$"; then echo -e "$DOCKER_TAGS\nlatest"; else echo "$DOCKER_TAGS"; fi)
+    #     DOCKER_TAGS=$(if [[ $COMMIT_ID == $EDGE_COMMIT_ID ]]; then echo -e "$DOCKER_TAGS\nedge"; else echo "$DOCKER_TAGS"; fi)
+    #     DOCKER_TAGS_ARG=$(echo "$DOCKER_TAGS" | sed -e "/^$/d" -e "s#^#-t $FULL_IMAGE_NAME:#" | tr "\n" " ")
 
-        docker build $DOCKER_TAGS_ARG --label org.opencontainers.image.revision=$COMMIT_ID .
-        docker push $FULL_IMAGE_NAME --all-tags
+    #     docker build $DOCKER_TAGS_ARG --label org.opencontainers.image.revision=$COMMIT_ID .
+    #     docker push $FULL_IMAGE_NAME --all-tags
 
     - name: Redeploy job on instance
       if: |
