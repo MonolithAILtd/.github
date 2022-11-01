@@ -9,15 +9,10 @@ on:
       edge-branch:
         required: true
         type: string
-      instance-name:
-        required: true
-        type: string
     secrets:
       aws-access-key-id:
         required: true
       aws-secret-access-key:
-        required: true
-      nomad-token:
         required: true
 
 jobs:
@@ -40,35 +35,19 @@ jobs:
       name: Login to Amazon ECR
       uses: aws-actions/amazon-ecr-login@v1
 
-    # - name: Build, tag and push image to AWS ECR
-    #   env:
-    #     DOCKER_BUILDKIT: 1
-    #   run: |
-    #     FULL_IMAGE_NAME=${{ steps.login-ecr.outputs.registry }}/${{ inputs.image-name }}
-    #     COMMIT_ID=$(git rev-parse HEAD)
-    #     EDGE_COMMIT_ID=$(git rev-parse origin/${{ inputs.edge-branch }})
-    #     LATEST_TAG=$(git tag | grep -e '^[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+$' | sort -V | tail -n1)
-
-    #     DOCKER_TAGS=$(git tag --points-at HEAD)
-    #     DOCKER_TAGS=$(if echo "$DOCKER_TAGS" | grep -q "^$LATEST_TAG$"; then echo -e "$DOCKER_TAGS\nlatest"; else echo "$DOCKER_TAGS"; fi)
-    #     DOCKER_TAGS=$(if [[ $COMMIT_ID == $EDGE_COMMIT_ID ]]; then echo -e "$DOCKER_TAGS\nedge"; else echo "$DOCKER_TAGS"; fi)
-    #     DOCKER_TAGS_ARG=$(echo "$DOCKER_TAGS" | sed -e "/^$/d" -e "s#^#-t $FULL_IMAGE_NAME:#" | tr "\n" " ")
-
-    #     docker build $DOCKER_TAGS_ARG --label org.opencontainers.image.revision=$COMMIT_ID .
-    #     docker push $FULL_IMAGE_NAME --all-tags
-
-    - name: Redeploy job on instance
-      if: ${{ github.ref == 'refs/heads/MN-5953-implement-CD-into-action' && (inputs.image-name == 'frontend' || inputs.image-name == 'dpu' ) }}
-        # (${{ inputs.image-name }} == 'dpu' || ${{ inputs.image-name }} == 'frontend')
+    - name: Build, tag and push image to AWS ECR
       env:
-        NOMAD_TOKEN: ${{ secrets.nomad-token }}
-        INSTANCE_ADDRESS: https://${{ inputs.instance-name }}.monolithai.app:4646 # could store this as secret
+        DOCKER_BUILDKIT: 1
       run: |
-        echo ${{ inputs.image-name }}
-        echo ${{ github.ref }}
-        # Read job job and save response to json file
-        curl --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" ${{ env.INSTANCE_ADDRESS }}/v1/job/${{ inputs.image-name }} | jq '{Job: .}' > ReadJob.json
-        # Stop running job
-        curl -X DELETE --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" ${{ env.INSTANCE_ADDRESS }}/v1/job/${{ inputs.image-name }}
-        # Re-start the job with the job json file
-        curl -X POST --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" -d @ReadJob.json ${{ env.INSTANCE_ADDRESS }}/v1/jobs
+        FULL_IMAGE_NAME=${{ steps.login-ecr.outputs.registry }}/${{ inputs.image-name }}
+        COMMIT_ID=$(git rev-parse HEAD)
+        EDGE_COMMIT_ID=$(git rev-parse origin/${{ inputs.edge-branch }})
+        LATEST_TAG=$(git tag | grep -e '^[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+$' | sort -V | tail -n1)
+
+        DOCKER_TAGS=$(git tag --points-at HEAD)
+        DOCKER_TAGS=$(if echo "$DOCKER_TAGS" | grep -q "^$LATEST_TAG$"; then echo -e "$DOCKER_TAGS\nlatest"; else echo "$DOCKER_TAGS"; fi)
+        DOCKER_TAGS=$(if [[ $COMMIT_ID == $EDGE_COMMIT_ID ]]; then echo -e "$DOCKER_TAGS\nedge"; else echo "$DOCKER_TAGS"; fi)
+        DOCKER_TAGS_ARG=$(echo "$DOCKER_TAGS" | sed -e "/^$/d" -e "s#^#-t $FULL_IMAGE_NAME:#" | tr "\n" " ")
+
+        docker build $DOCKER_TAGS_ARG --label org.opencontainers.image.revision=$COMMIT_ID .
+        docker push $FULL_IMAGE_NAME --all-tags
