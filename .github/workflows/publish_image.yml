@@ -51,3 +51,4 @@ jobs:
 
         docker build $DOCKER_TAGS_ARG --label org.opencontainers.image.revision=$COMMIT_ID .
         docker push $FULL_IMAGE_NAME --all-tags
+        
