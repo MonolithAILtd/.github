@@ -23,8 +23,6 @@ jobs:
         NOMAD_TOKEN: ${{ secrets.nomad-token }}
         INSTANCE_ADDRESS: https://${{ inputs.instance-name }}.monolithai.app:4646 # could store this as secret
       run: |
-        echo ${{ inputs.image-name }}
-        echo ${{ github.ref }}
         # Read job job and save response to json file
         curl --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" ${{ env.INSTANCE_ADDRESS }}/v1/job/${{ inputs.image-name }} | jq '{Job: .}' > ReadJob.json
         # Stop running job
