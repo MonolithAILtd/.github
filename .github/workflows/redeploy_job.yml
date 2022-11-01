@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Redeploy job on instance
-      if: ${{ github.ref == 'refs/heads/develop' && (inputs.image-name == 'frontend' || inputs.image-name == 'dpu' ) }}
+      if: ${{ github.ref == 'refs/heads/develop' && (inputs.image-name == 'frontend' || inputs.image-name == 'dpu') }}
       env:
         NOMAD_TOKEN: ${{ secrets.nomad-token }}
         INSTANCE_ADDRESS: https://${{ inputs.instance-name }}.monolithai.app:4646 # could store this as secret
