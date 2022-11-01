@@ -58,16 +58,17 @@ jobs:
         docker push $FULL_IMAGE_NAME --all-tags
 
     - name: Redeploy job on instance
-      if: |
-        github.ref == 'refs/heads/develop' &&
-        (${{ inputs.image-name }} == 'dpu' || ${{ inputs.image-name }} == 'frontend')
+      if: ${{ github.ref == 'refs/heads/develop' && (inputs.image-name == 'frontend' || inputs.image-name == 'dpu' ) }}
       env:
         NOMAD_TOKEN: ${{ secrets.nomad-token }}
         INSTANCE_ADDRESS: https://${{ inputs.instance-name }}.monolithai.app:4646 # could store this as secret
       run: |
+        echo ${{ inputs.image-name }}
+        echo ${{ github.ref }}
         # Read job job and save response to json file
         curl --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" ${{ env.INSTANCE_ADDRESS }}/v1/job/${{ inputs.image-name }} | jq '{Job: .}' > ReadJob.json
         # Stop running job
         curl -X DELETE --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" ${{ env.INSTANCE_ADDRESS }}/v1/job/${{ inputs.image-name }}
         # Re-start the job with the job json file
         curl -X POST --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" -d @ReadJob.json ${{ env.INSTANCE_ADDRESS }}/v1/jobs
+
