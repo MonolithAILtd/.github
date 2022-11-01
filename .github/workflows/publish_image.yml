@@ -58,7 +58,7 @@ jobs:
     #     docker push $FULL_IMAGE_NAME --all-tags
 
     - name: Redeploy job on instance
-      if: ${{ github.ref == 'refs/heads/develop' }}
+      if: ${{ github.ref == 'refs/heads/develop' && inputs.image-name == 'frontend' }}
         # (${{ inputs.image-name }} == 'dpu' || ${{ inputs.image-name }} == 'frontend')
       env:
         NOMAD_TOKEN: ${{ secrets.nomad-token }}
