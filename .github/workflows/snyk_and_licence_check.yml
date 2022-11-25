@@ -1,0 +1,52 @@
+on:
+  workflow_call:
+    inputs:
+      requirements-path:
+        description: 'Python main requirements file'
+        default: 'deploy/requirements.txt'
+        required: false
+        type: string
+
+
+jobs:
+  security-and-licence-check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip' # caching pip dependencies
+      - name: Install dependencies
+        env:
+          GITHUB_SECRET_TOKEN: ${{ secrets.CI_READ_GH_TOKEN }}
+        run: |
+          git config --global credential.helper "!f() { echo \"username=docker\\npassword=\${GITHUB_SECRET_TOKEN}\"; }; f"
+          python -m pip install --upgrade pip
+          pip install -r {{inputs.requirements-path}}
+      - name: Set up Node 14
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14
+      - name: install Snyk CLI
+        run: npm install -g snyk
+      - name: run Snyk Code Test
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test --file={{inputs.requirements-path}} --severity-threshold=high
+      - name: get licence strategy file
+        uses: actions/checkout@v2
+        with:
+          ref: 'main'
+          repository: MonolithAILtd/Licence-Allow-List
+          token: ${{ secrets.CI_PULL_TOKEN}}
+          path: licence
+      - name: License Checker
+        uses: andersy005/gh-action-py-liccheck@main
+        with:
+          strategy-ini-file: ./licence/strategy.ini
+          requirements-txt-file: {{inputs.requirements-path}}
