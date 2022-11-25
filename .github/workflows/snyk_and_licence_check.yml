@@ -27,7 +27,7 @@ jobs:
         run: |
           git config --global credential.helper "!f() { echo \"username=docker\\npassword=\${GITHUB_SECRET_TOKEN}\"; }; f"
           python -m pip install --upgrade pip
-          pip install -r {{inputs.requirements-path}}
+          pip install -r ${{inputs.requirements-path}}
       - name: Set up Node 14
         uses: actions/setup-node@v3
         with:
@@ -37,7 +37,7 @@ jobs:
       - name: run Snyk Code Test
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk test --file={{inputs.requirements-path}} --severity-threshold=high
+        run: snyk test --file=${{inputs.requirements-path}} --severity-threshold=high
       - name: get licence strategy file
         uses: actions/checkout@v2
         with:
@@ -49,4 +49,4 @@ jobs:
         uses: andersy005/gh-action-py-liccheck@main
         with:
           strategy-ini-file: ./licence/strategy.ini
-          requirements-txt-file: {{inputs.requirements-path}}
+          requirements-txt-file: ${{inputs.requirements-path}}
