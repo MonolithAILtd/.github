@@ -60,12 +60,24 @@ jobs:
     - name: Redeploy job on instance
       if: ${{ github.ref == 'refs/heads/develop' && (inputs.image-name == 'frontend' || inputs.image-name == 'dpu') }}
       env:
-        NOMAD_TOKEN: ${{ secrets.nomad-token }}
+        NOMAD_TOKEN: ${{ secrets.nomad-token }} # if we are storing this in the s3 param store as permanent storage, can we just read straight from there?
         INSTANCE_ADDRESS: https://${{ inputs.instance-name }}.monolithai.app:4646 # could store this as secret
+      # below solution involves downtime since job is is stopped by DELETE
       run: |
         # Read job job and save response to json file
         curl --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" ${{ env.INSTANCE_ADDRESS }}/v1/job/${{ inputs.image-name }} | jq '{Job: .}' > ReadJob.json
         # Stop running job
         curl -X DELETE --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" ${{ env.INSTANCE_ADDRESS }}/v1/job/${{ inputs.image-name }}
         # Re-start the job with the job json file
+        curl -X POST --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" -d @ReadJob.json ${{ env.INSTANCE_ADDRESS }}/v1/jobs
+
+      # below alternative solution involves no downtime since env in job spec is updated
+      run: |
+        # Read job job and save response to json file
+        curl --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" ${{ env.INSTANCE_ADDRESS }}/v1/job/${{ inputs.image-name }} | jq '{Job: .}' > ReadJob.json
+        
+        # Update job spec file with the latest 'SEMANTIC_VERSION' env with the new branch git tag.
+        sed ... ??
+
+        # Re-start the job with the job json file with the new env, this will trigger a fresh pull of image from ECR
         curl -X POST --header "X-Nomad-Token: ${{ env.NOMAD_TOKEN }}" -d @ReadJob.json ${{ env.INSTANCE_ADDRESS }}/v1/jobs
