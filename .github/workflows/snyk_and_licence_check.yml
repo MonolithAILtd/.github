@@ -6,14 +6,15 @@ on:
         default: 'deploy/requirements.txt'
         required: false
         type: string
-
+    python-version:
+      description: "Version range or exact version of Python or PyPy to use, using SemVer's version range syntax. Reads from .python-version if unset."
 
 jobs:
   security-and-licence-check:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7]
+        python-version: [inputs.python-version]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
