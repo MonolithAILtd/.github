@@ -10,7 +10,7 @@ on:
         description: "Versions of python to run this workflow for. Python versions may affect specific package versions installed."
         default: [3.7]
         required: false
-        type: environment
+        type: string
 
 jobs:
   security-and-licence-check:
