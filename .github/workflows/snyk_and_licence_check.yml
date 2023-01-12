@@ -12,15 +12,12 @@ on:
 jobs:
   security-and-licence-check:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [inputs.python-version]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ inputs.python-version }}
           cache: 'pip' # caching pip dependencies
       - name: Install dependencies
         env:
