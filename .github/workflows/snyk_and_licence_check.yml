@@ -6,20 +6,20 @@ on:
         default: 'deploy/requirements.txt'
         required: false
         type: string
-
+      python-version:
+        description: "Version of python to install requirements. May affect specific package versions installed."
+        default: 3.7
+        type: string
 
 jobs:
   security-and-licence-check:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.7]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ inputs.python-version }}
           cache: 'pip' # caching pip dependencies
       - name: Install dependencies
         env:
