@@ -9,6 +9,7 @@ on:
       python-version:
         description: "Version of python to install requirements. May affect specific package versions installed."
         default: 3.7
+        required: false
         type: string
 
 jobs:
