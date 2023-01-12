@@ -6,8 +6,9 @@ on:
         default: 'deploy/requirements.txt'
         required: false
         type: string
-    python-version:
-      description: "Version range or exact version of Python or PyPy to use, using SemVer's version range syntax. Reads from .python-version if unset."
+      python-version:
+        description: "Version of python to install requirements. May affect specific package versions installed."
+        default: 3.7
 
 jobs:
   security-and-licence-check:
