@@ -9,14 +9,15 @@ on:
       python-matrix:
         description: "Versions of python to run this workflow for. Python versions may affect specific package versions installed."
         default: [3.7]
-        type: string
+        required: false
+        type: environment
 
 jobs:
   security-and-licence-check:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [${{ inputs.python-matrix }}]
+        python-version: ${{ inputs.python-matrix }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
